@@ -23,7 +23,7 @@ steps:
     pull: default
     image: golang:1.14
     commands:
-      - make build
+      - make build-linux
 
   - name: release
     pull: default

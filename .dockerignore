@@ -8,4 +8,4 @@ docker-compose.yml
 *.go
 Makefile
 go.*
-README.md
+README.*
