@@ -1,0 +1,75 @@
+kind: pipeline
+name: default
+
+platform:
+  os: linux
+  arch: amd64
+
+workspace:
+  base: /go
+  path: src/bitbucket.org/joshdvir/all-go
+
+steps:
+  - name: cloner
+    pull: default
+    image: plugins/git
+    settings:
+      tags: true
+    when:
+      event:
+        - tag
+
+  - name: build
+    pull: default
+    image: golang:1.14
+    commands:
+      - make build
+
+  - name: release
+    pull: default
+    image: golang:1.14
+    commands:
+      - "curl -sL https://git.io/goreleaser | bash"
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github-token
+    when:
+      event:
+        - tag
+
+  - name: docker
+    pull: default
+    image: plugins/docker:latest
+    settings:
+      file: Dockerfile
+      force_tag: true
+      repo: joshdvir/helm-wrapper
+      tag:
+        - "${DRONE_BUILD_NUMBER}"
+        - latest
+    environment:
+      DOCKER_PASSWORD:
+        from_secret: docker-password
+      DOCKER_USERNAME:
+        from_secret: docker-username
+
+---
+kind: secret
+name: github-token
+get:
+  path: drone/data/github
+  name: token
+
+---
+kind: secret
+name: docker-password
+get:
+  path: drone/data/dockerhub
+  name: password
+
+---
+kind: secret
+name: docker-username
+get:
+  path: drone/data/dockerhub
+  name: username
